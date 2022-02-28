@@ -1,4 +1,4 @@
-# AnalyseVue
+# Vue2源码分析
 
 ## 介绍
 
@@ -7,4 +7,4 @@ Vue3发布正式版已经有一段时间了，Vue3有很多思想都是基于Vue
 
 ## 目录
 
-[响应式原理](./reactivity.md)
+[响应式原理](./docs/reactivity.md)

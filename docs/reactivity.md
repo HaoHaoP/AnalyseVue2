@@ -180,4 +180,4 @@
 - Dep 发布订阅者，添加观察者以及在数据发生改变的时候通知观察者
 - compile 解析元素节点，将数据显示到HTML模版
 
-![工作流程](./imgs/reactivity.jpg)
+![工作流程](../imgs/reactivity.jpg)
