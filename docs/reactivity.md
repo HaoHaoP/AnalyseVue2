@@ -181,3 +181,46 @@
 - compile 解析元素节点，将数据显示到HTML模版
 
 ![工作流程](../imgs/reactivity.jpg)
+
+## Object.defineProperty的缺陷
+
+学习过Vue3的小伙伴已经知道，Vue3用[Proxy](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Proxy)来代替了[Object.defineProperty](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty)来实现数据响应，是因为``defineProperty``有一定的缺陷。那么使用``defineProperty``有什么缺陷呢？
+
+- 无法检测到对象属性的新增或删除
+- 无法监听数组变化
+
+在官方文档[检测变化的注意事项](https://cn.vuejs.org/v2/guide/reactivity.html#检测变化的注意事项)中提到，对于数组的数组项目修改和对象的属性变更要使用``Vue.set``来触发响应式系统的状态更新。否则修改数组的数组项目和对象的属性是不会触发更新。有时候遇到层级过多的对象可能还需要通过使用``$forceUpdate``来强制重新渲染。为什么会有这样的缺陷？
+
+1. ``defineProperty``只能劫持对象的属性，从而需要对每个对象，每个属性进行遍历。如果对象的属性是对象，还需要深度遍历。
+2. ``defineProperty``是可以监控到数组下标的变化的，但是尤雨溪出于对性能和用户体验的考虑，弃用了这种特性。具体可以参考[《记一次思否问答的问题思考：Vue为什么不能检测数组变动》](https://segmentfault.com/a/1190000015783546)。
+
+关于第二点其实是有很大争议的。我个人的看法是Vue2是在性能和体验上找到了一种巧妙的平衡。学过原型链的小伙伴都知道``Array``的原型链是指向``Object``的，实际上数组也是一种对象。在开发体验上为了保持数组和对象操作一致，都可以使用``Vue.set``来修改属性或数组项目变更。另外也避免了``shift`` ``unshift`` ``splice`` ``sort`` ``reverse``这些数组非尾部操作带来的性能问题。这些非尾部移动可以写一个简单的代码来实验，这会触发数组索引的移动或变动，触发很多次的get和set。
+
+```javascript
+function observe(data) {
+  Object.keys(data).forEach(key => {
+    let val = data[key]
+    if (typeof val === 'object') {
+      observe(val)
+    }
+    Object.defineProperty(data, key, {
+      get() {
+        console.log('get')
+        return val
+      },
+      set(newVal) {
+        if (newVal !== val) {
+          val = newVal
+          console.log('set')
+        }
+      }
+    })
+  })
+}
+
+let arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
+
+observe(arr)
+
+arr.splice(0, 1)
+```
